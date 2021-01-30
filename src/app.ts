@@ -3,6 +3,7 @@ import { Telegraf } from 'telegraf'
 import { transactionParser } from './parser'
 import { transactionTypesSvc, categoriesSvc, transactionsSvc } from './services'
 import { Category, Transaction, TransactionType } from './model'
+import { sleep } from './util'
 
 
 const tgToken = process.env["TG_BOT_TOKEN"]
@@ -31,19 +32,24 @@ bot.on('text', async (ctx) => {
             const transactionType = await transactionTypeByCategory(result.value.category)
             const t = new Transaction(
                 result.value.date || new Date(),
-                ctx.message.from.username!,
+                `${ctx.message.from.first_name}${ctx.message.from.last_name ? ' ' + ctx.message.from.last_name : ''}`,
                 transactionType,
                 result.value.category,
                 result.value.amountOfMoney,
                 result.value.comment)
             await transactionsSvc.addTransaction(t)
-            ctx.replyWithMarkdown(
-                `запись добавлена: ${t.type.name} \`${t.date.toDateString()}\`, категория \`${t.category.name}\`, ` +
-                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? `\`${t.comment}\``: ''}`)
+            const m = await ctx.replyWithMarkdown(
+                `запись добавлена: ${t.type.name} \`${t.date.toDateString()}\` категория \`${t.category.name}\` ` +
+                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`)
         } else {
-            ctx.replyWithMarkdown(
+            const m = await ctx.replyWithMarkdown(
                 `не понял (строка ${result.index.line} отступ ${result.index.offset}): \n` +
-                `ожидается одно из следующих выражений: ${result.expected.map(e => `\`${e}\``).join(", ")}`)
+                `ожидается одно из следующих выражений: ${result.expected.map(e => `\`${e}\``).join(", ")}\n` +
+                `сообщение будет автоматически удалено через 1 минуту..`)
+            setTimeout(() => {
+                ctx.deleteMessage(ctx.message.message_id)
+                ctx.deleteMessage(m.message_id)
+            }, 60000)
         }
     } catch (e) {
         ctx.reply("непредвиденная ошибка: " + e)
