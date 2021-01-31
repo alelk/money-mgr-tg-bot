@@ -1,4 +1,5 @@
 export class Transaction {
+    id: number
     date: Date
     user: string
     type: TransactionType
@@ -6,7 +7,8 @@ export class Transaction {
     amountOfMoney: number
     comment?: string
 
-    constructor(date: Date, user: string, type: TransactionType, category: Category, amountOfMoney: number, comment?: string) {
+    constructor(id: number, date: Date, user: string, type: TransactionType, category: Category, amountOfMoney: number, comment?: string) {
+        this.id = id
         this.date = date
         this.user = user
         this.type = type
@@ -14,6 +16,16 @@ export class Transaction {
         this.amountOfMoney = amountOfMoney
         this.comment = comment
     }
+}
+
+export interface EditedTransaction {
+    id: number
+    date?: Date
+    user?: string
+    type?: TransactionType
+    category?: Category
+    amountOfMoney?: number
+    comment?: string
 }
 
 export class TransactionType {

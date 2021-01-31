@@ -30,7 +30,7 @@ function stringIgnoreCase(str: string) {
 
 function categorySynonym(s: CategorySynonym<string | RegExp>) {
     if (typeof s.value === "string") return stringIgnoreCase(s.value)
-    else return P.regexp(s.value)
+    else return P.regexp(s.value).desc(s.value.source)
 }
 
 export function transactionParser(categories: Category[]) {
@@ -39,13 +39,13 @@ export function transactionParser(categories: Category[]) {
             P.alt(
                 ...categories
                     .map(c => [
-                        { 
-                            parserLen: c.name.length, 
-                            parser: stringIgnoreCase(c.name) 
+                        {
+                            parserLen: c.name.length,
+                            parser: stringIgnoreCase(c.name)
                         },
-                        ...c.synonyms.map(s => ({ 
-                            parserLen: typeof s.value === 'string' ? s.value.length : 0, 
-                            parser: categorySynonym(s) 
+                        ...c.synonyms.map(s => ({
+                            parserLen: typeof s.value === 'string' ? s.value.length : 0,
+                            parser: categorySynonym(s)
                         }))
                     ])
                     .reduce((a, b) => a.concat(b), [])
@@ -58,7 +58,7 @@ export function transactionParser(categories: Category[]) {
             P.alt(
                 ...currencies
                     .sort((a, b) => b.length - a.length)
-                    .map(stringIgnoreCase)),
+                    .map(stringIgnoreCase)).lookahead(P.alt(P.whitespace, P.end).desc("пробел или конец строки")),
         amountOfMoney: (l) => l.number.skip(P.optWhitespace.then(l.currency).fallback(null)),
         amountOfMoneyExpr: (l) => P.seqMap(
             l.amountOfMoney,
