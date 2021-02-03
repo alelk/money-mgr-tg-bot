@@ -50,7 +50,7 @@ bot.on('text', async (ctx) => {
         const t = await parseTransaction(ctx.message)
         await transactionsSvc.addTransaction(t)
         await ctx.replyWithMarkdown(
-            `запись добавлена: ${t.type.name} \`${t.date.toDateString()}\` категория \`${t.category.name}\` ` +
+            `запись добавлена: ${t.type.name} \`${t.date.toLocaleDateString('ru')}\` категория \`${t.category.name}\` ` +
             `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: ctx.message.message_id })
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
@@ -71,7 +71,7 @@ bot.on('edited_message', async (ctx) => {
             }
             else await transactionsSvc.editTransaction(t)
             await ctx.replyWithMarkdown(
-                `запись ${isNewTransaction ? 'добавлена' : 'изменена'}: ${t.type.name} \`${t.date.toDateString()}\` категория \`${t.category.name}\` ` +
+                `запись ${isNewTransaction ? 'добавлена' : 'изменена'}: ${t.type.name} \`${t.date.toLocaleDateString('ru')}\` категория \`${t.category.name}\` ` +
                 `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: msg.message_id })
         } catch (e) {
             const m = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: msg.message_id })
