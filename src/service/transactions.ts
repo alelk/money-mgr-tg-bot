@@ -1,8 +1,11 @@
 import { AbstractGoogleSpreadsheetService } from './index'
 import { EditedTransaction, Transaction } from '../model'
 import { join } from 'path'
+import { last } from 'lodash'
 
 export class TransactionsService extends AbstractGoogleSpreadsheetService {
+
+    private lastTransactionRow?: number
 
     constructor(sheetId: string, authEmail: string, authKey: string) {
         super(sheetId, authEmail, authKey)
@@ -15,7 +18,7 @@ export class TransactionsService extends AbstractGoogleSpreadsheetService {
 
     async addTransaction(t: Transaction) {
         const sheet = await this.getSheet()
-        await sheet.addRow({
+        const row = await sheet.addRow({
             id: t.id,
             date: t.date.toDateString(),
             user: t.user,
@@ -24,12 +27,15 @@ export class TransactionsService extends AbstractGoogleSpreadsheetService {
             amount: t.amountOfMoney,
             comment: t.comment || ""
         })
+        this.lastTransactionRow = row.rowIndex
     }
 
     async editTransaction(editedTransaction: EditedTransaction) {
         const sheet = await this.getSheet()
-        const rows = await sheet.getRows({ limit: 1000, offset: sheet.rowCount - 1000 < 0 ? 0 : sheet.rowCount - 1000 })
-        const row = rows.find(r => r["id"] == editedTransaction.id)
+        const rows = (this.lastTransactionRow == null || this.lastTransactionRow - 1000 < 0)
+            ? await sheet.getRows()
+            : await sheet.getRows({ limit: 1000, offset: this.lastTransactionRow - 1000 })
+        const row = rows.find(r => r["id"].toString() === editedTransaction.id.toString())
         if (row == null) throw Error(`Не найдена финансовая транзакция с id ${editedTransaction.id}`)
         if (editedTransaction.date != null) row["date"] = editedTransaction.date.toDateString()
         if (editedTransaction.user != null) row["user"] = editedTransaction.user
