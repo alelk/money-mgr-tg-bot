@@ -2,6 +2,7 @@ import { assert } from 'console'
 import { TransactionTypesService } from './service/transactionTypes'
 import { CategoriesService } from './service/categories'
 import { TransactionsService } from './service/transactions'
+import { StatisticService } from './service/statisic'
 
 const moneyMgrEmail = process.env["MONEY_MGR_EMAIL"]
 const moneyMgrKey = process.env["MONEY_MGR_KEY"]
@@ -14,3 +15,5 @@ export const transactionTypesSvc =
     new TransactionTypesService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionsSvc =
     new TransactionsService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+export const statisticSvc =
+    new StatisticService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))

@@ -1,11 +1,11 @@
 import P from 'parsimmon'
-import { Category, CategorySynonym, TransactionType } from '../model'
-import { ParsedTransaction } from '../model/parsed'
+import { Category, CategorySynonym } from '../model'
+import { ParsedTransaction, ParsedCategory } from '../model/parsed'
 
 const currencies = ["руб.", "руб", "рублей", "р.", "р"]
 
 interface TransactionSpec {
-    category: Category,
+    category: ParsedCategory,
     number: number,
     currency: string,
     amountOfMoney: number,
@@ -52,7 +52,11 @@ export function transactionParser(categories: Category[]) {
                     .sort((a, b) => b.parserLen - a.parserLen)
                     .map(p => p.parser)
             )
-                .map(c => categories.find(category => category.matches(c))!),
+                .map(c => {
+                    const category = {...categories.find(category => category.matches(c))!} as ParsedCategory
+                    if (category.name.toLowerCase() !== c.trim().toLowerCase()) category.userText = c
+                    return category
+                }),
         number: () => P.regexp(/-?(0|[1-9][0-9]*)([.,][0-9]+)?([eE][+-]?[0-9]+)?/).map(n => Number(n.replace(/,/, '.'))).desc("число"),
         currency: () =>
             P.alt(

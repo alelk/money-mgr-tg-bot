@@ -20,8 +20,10 @@
   },
   "dependencies": {
     "@types/google-spreadsheet": "^3.0.2",
+    "@types/lodash": "^4.14.168",
     "@types/parsimmon": "^1.10.6",
     "google-spreadsheet": "^3.1.15",
+    "lodash": "^4.17.20",
     "parsimmon": "^1.16.0",
     "telegraf": "^4.0.1"
   }
