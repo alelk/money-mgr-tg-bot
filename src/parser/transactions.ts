@@ -52,9 +52,9 @@ export function transactionParser(categories: Category[]) {
                     .sort((a, b) => b.parserLen - a.parserLen)
                     .map(p => p.parser)
             )
-                .map(c => {
-                    const category = {...categories.find(category => category.matches(c))!} as ParsedCategory
-                    if (category.name.toLowerCase() !== c.trim().toLowerCase()) category.userText = c
+                .map(userText => {
+                    const category = { ...categories.find(category => category.matches(userText))! } as ParsedCategory
+                    if (category.name.toLowerCase() !== userText.trim().toLowerCase()) category.userText = userText
                     return category
                 }),
         number: () => P.regexp(/-?(0|[1-9][0-9]*)([.,][0-9]+)?([eE][+-]?[0-9]+)?/).map(n => Number(n.replace(/,/, '.'))).desc("число"),
@@ -72,17 +72,11 @@ export function transactionParser(categories: Category[]) {
         comment: () => P.any.atLeast(1).tie().desc("комментарий"),
         date: () =>
             P.alt(
-                stringIgnoreCase("вчера").map(() => {
-                    const d = new Date(); d.setDate(d.getDate() - 1); return d
-                }),
-                stringIgnoreCase("позавчера").map(() => {
-                    const d = new Date(); d.setDate(d.getDate() - 2); return d
-                }),
+                stringIgnoreCase("вчера").map(() => shiftCurrentDate(-1)),
+                stringIgnoreCase("позавчера").map(() => shiftCurrentDate(-2)),
                 P.digits
-                    .skip(P.optWhitespace.then(P.regexp(/дн(я|ей) назад/i)))
-                    .desc("дата, например '5 дней назад' или 'вчера'").map((n) => {
-                        const d = new Date(); d.setDate(d.getDate() - Number.parseInt(n)); return d
-                    })),
+                    .skip(P.optWhitespace.then(P.regexp(/дн(я|ей)\s+назад/i)))
+                    .desc("дата, например '5 дней назад'").map((n) => shiftCurrentDate(-Number.parseInt(n)))),
 
         transaction: (l) =>
             P.alt(
@@ -103,3 +97,8 @@ export function transactionParser(categories: Category[]) {
     })
 }
 
+export function shiftCurrentDate(daysToShift: number) {
+    const currentDate = new Date()
+    currentDate.setDate(currentDate.getDate() + daysToShift)
+    return currentDate
+}
