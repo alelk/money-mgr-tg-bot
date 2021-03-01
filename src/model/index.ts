@@ -1,3 +1,21 @@
+export enum TransactionDirection {
+    INCOME = 'income',
+    OUTCOME = 'outcome',
+    NEUTRAL = 'neutral'
+}
+
+export class TransactionType {
+    name: string
+    direction: TransactionDirection
+    comment?: string
+
+    constructor(name: string, direction: TransactionDirection, comment?: string) {
+        this.name = name
+        this.direction = direction
+        this.comment = comment
+    }
+}
+
 export class Transaction {
     id: number
     date: Date
@@ -26,16 +44,6 @@ export interface EditedTransaction {
     category?: Category
     amountOfMoney?: number
     comment?: string
-}
-
-export class TransactionType {
-    name: string
-    comment?: string
-
-    constructor(name: string, comment?: string) {
-        this.name = name
-        this.comment = comment
-    }
 }
 
 export interface CategorySynonym<V> {
@@ -71,17 +79,30 @@ export function parseCategorySynonym(s: string): CategorySynonymString | Categor
     else return new CategorySynonymString(s)
 }
 
+export enum CategoryRelationToParent {
+    POSITIVE = "positive",
+    NEGATIVE = "negative"
+}
 
 export class Category {
     transactionTypeName: string
     name: string
     parentCategoryName?: string
+    relationToParent: CategoryRelationToParent
     synonyms: CategorySynonym<string | RegExp>[]
     comment?: string
 
-    constructor(transactionTypeName: string, name: string, synonyms: CategorySynonym<string | RegExp>[], parentCategoryName?: string, comment?: string) {
+    constructor(
+        transactionTypeName: string,
+        name: string,
+        synonyms: CategorySynonym<string | RegExp>[],
+        relationToParent: CategoryRelationToParent = CategoryRelationToParent.POSITIVE,
+        parentCategoryName?: string,
+        comment?: string
+    ) {
         this.transactionTypeName = transactionTypeName
         this.name = name
+        this.relationToParent = relationToParent
         this.parentCategoryName = parentCategoryName
         this.synonyms = synonyms
         this.comment = comment
