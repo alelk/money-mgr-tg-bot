@@ -1,5 +1,12 @@
 import { Category, TransactionType } from "."
 
+export class StatisticRequest {
+    date: Date
+    constructor(date: Date) {
+        this.date = date
+    }
+}
+
 export class CategoryStatistic {
     category: Category
     amount: number
@@ -25,9 +32,11 @@ export class TransactionTypeStatistic {
 export class MonthStatustic {
     date: Date
     transactionTypeStatistic: TransactionTypeStatistic[]
+    result: string
 
-    constructor(date: Date, transactionTypeStatistic: TransactionTypeStatistic[]) {
+    constructor(date: Date, transactionTypeStatistic: TransactionTypeStatistic[], result: string) {
         this.date = date
-        this.transactionTypeStatistic = transactionTypeStatistic
+        this.transactionTypeStatistic = transactionTypeStatistic,
+            this.result = result
     }
 }

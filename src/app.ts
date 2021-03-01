@@ -1,11 +1,12 @@
 import { assert } from 'console'
 import { Telegraf } from 'telegraf'
-import { transactionParser } from './parser'
+import { transactionParser } from './parser/transactions'
 import { transactionTypesSvc, categoriesSvc, transactionsSvc, statisticSvc } from './services'
 import { Category, Transaction, TransactionType } from './model'
 import { Message, Update } from 'telegraf/typings/telegram-types'
 import _ from 'lodash'
 import { CategoryStatistic } from './model/statistic'
+import { statisticRequestParser } from './parser/statisticRequest'
 
 
 const tgToken = process.env["TG_BOT_TOKEN"]
@@ -75,41 +76,58 @@ bot.command('help', async (ctx) => {
     delay(60000, () => ctx.deleteMessage(m.message_id))
 })
 
-bot.hears(/статистика/i, async (ctx) => {
-    const s = (await statisticSvc.getStatistic()).pop()
-    if (s == null) await ctx.reply("Статистика не найдена")
-    else {
-        const msgText = "Статистика за последний месяц:\n\n" +
-            s.transactionTypeStatistic.map(({ transactionType, categories, amount }) => {
-                function printCategoryStatistic(categoryStatistic: CategoryStatistic, level = 0): string[] {
-                    const children = (categoryStatistic.children || []).reduce((acc, с) => [...acc, ...printCategoryStatistic(с, level + 1)], [] as string[])
-                    return [
-                        `\`${(level === 0 ? '\*' : '\*'.padStart(level + 1)).padEnd(5)
-                        }${categoryStatistic.amount.toString().padStart(8)
-                        } руб.\` #${categoryStatistic.category.name.replace(/[^\w\dа-я]+/ig, '\\_')}`,
-                        ...children
-                    ]
-                }
-                return `*#${transactionType.name.trim().replace(/[^\w\dа-я]+/ig, '_')}*   \`${amount} руб.\`\n\n` +
-                    categories.map(categoryStatistic => printCategoryStatistic(categoryStatistic).join('\n')).join('\n\n')
-            }).join('\n\n')
-        await ctx.replyWithMarkdown(msgText)
+bot.hears(/статистика(.*)/i, async (ctx) => {
+    try {
+        const request = statisticRequestParser.statisticRequest.tryParse(ctx.message.text)
+        const s = (await statisticSvc.getStatistic()).find(s => s.date.getFullYear() === request.date.getFullYear() && s.date.getMonth() === request.date.getMonth())
+        if (s == null) await ctx.reply("Статистика не найдена")
+        else {
+            const msgText = `Статистика за ${s.date.getFullYear()}-${s.date.getMonth() + 1}:\n\n` +
+                s.transactionTypeStatistic.map(({ transactionType, categories, amount }) => {
+                    function printCategoryStatistic(categoryStatistic: CategoryStatistic, level = 0): string[] {
+                        const children = (categoryStatistic.children || []).reduce((acc, с) => [...acc, ...printCategoryStatistic(с, level + 1)], [] as string[])
+                        return [
+                            `\`${(level === 0 ? '\*' : '\*'.padStart(level + 1)).padEnd(3)
+                            }${categoryStatistic.amount.toString().padStart(6)
+                            } руб.\` #${categoryStatistic.category.name.replace(/[^\w\dа-я]+/ig, '\\_')}`,
+                            ...children
+                        ]
+                    }
+                    return `*#${transactionType.name.trim().replace(/[^\w\dа-я]+/ig, '_')}*   \`${amount} руб.\`\n\n` +
+                        categories.map(categoryStatistic => printCategoryStatistic(categoryStatistic).join('\n')).join('\n\n')
+                }).join('\n\n') + `\n\n--\nИтог месяца: \`${s.result}\``
+            await ctx.replyWithMarkdown(msgText)
+        }
+    } catch (e) {
+        invalidMessageIds.add(ctx.message.message_id)
+        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+        delay(60000, () => ctx.deleteMessage(m1.message_id))
+        delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
 })
 
 bot.command('categories', async (ctx) => {
-    const cs = await categories
-    const msgText = (await transactionTypes).map(t =>
-        `*${t.name}*:\n \`\`\`\n  ${_.sortBy(
-            cs.filter(c => c.transactionTypeName === t.name && !cs.find(c1 => c1.parentCategoryName === c.name)),
-            "name")
-            .map(c => c.name)//`${c.name} (${c.synonyms.filter(s => typeof s.value == 'string').map(s => s.value).join(", ")})`)
-            .join("\n  ")
-        }\n\`\`\``)
-        .join("\n\n")
-    const m = await ctx.replyWithMarkdown(msgText)
-    delay(120000, () => ctx.deleteMessage(ctx.message.message_id))
-    delay(120000, () => ctx.deleteMessage(m.message_id))
+    try {
+        const cs = await categories
+        const msgText = (await transactionTypes).map(t =>
+            `*${t.name}*:\n \`\`\`\n  ${_.sortBy(
+                cs.filter(c => c.transactionTypeName === t.name && !cs.find(c1 => c1.parentCategoryName === c.name)),
+                "name")
+                .map(c => c.name)//`${c.name} (${c.synonyms.filter(s => typeof s.value == 'string').map(s => s.value).join(", ")})`)
+                .join("\n  ")
+            }\n\`\`\``)
+            .join("\n\n")
+        const m = await ctx.replyWithMarkdown(msgText)
+        delay(120000, () => ctx.deleteMessage(ctx.message.message_id))
+        delay(120000, () => ctx.deleteMessage(m.message_id))
+    } catch (e) {
+        invalidMessageIds.add(ctx.message.message_id)
+        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+        delay(60000, () => ctx.deleteMessage(m1.message_id))
+        delay(60000, () => ctx.deleteMessage(m2.message_id))
+    }
 })
 
 bot.on('text', async (ctx) => {
