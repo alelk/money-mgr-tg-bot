@@ -1,6 +1,10 @@
 import {Telegraf} from 'telegraf'
 
-const bot = new Telegraf("1577224234:AAG6mx9R6FKjAQWl9ZH2rGH5KhQYB4MCtTw")
+// замените на токен вашего бота
+const tgToken = "1577224234:AAG6mx9R6FKjAQWl9ZH2rGH5KhQYB4MCtTw"
+
+const bot = new Telegraf(tgToken)
+
 bot.start((ctx) => ctx.reply('Welcome'))
 bot.help((ctx) => ctx.reply('Send me a sticker'))
 bot.on('sticker', (ctx) => ctx.reply('👍'))
