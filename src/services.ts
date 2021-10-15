@@ -9,8 +9,8 @@ assert(moneyMgrEmail != null, "No MONEY_MGR_EMAIL environment variable found")
 assert(moneyMgrKey != null, "No MONEY_MGR_KEY environment variable found")
 
 export const categoriesSvc =
-    new CategoriesService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new CategoriesService("1vFPVVr7tcQFaJHQB4HbTegDHalB0DkUzp2EoYe-WHIU", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionTypesSvc =
-    new TransactionTypesService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new TransactionTypesService("1vFPVVr7tcQFaJHQB4HbTegDHalB0DkUzp2EoYe-WHIU", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionsSvc =
-    new TransactionsService("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new TransactionsService("1vFPVVr7tcQFaJHQB4HbTegDHalB0DkUzp2EoYe-WHIU", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
