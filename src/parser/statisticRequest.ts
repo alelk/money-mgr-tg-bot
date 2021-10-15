@@ -15,7 +15,7 @@ export const statisticRequestParser = P.createLanguage<StatisticRequestSpec>({
             .skip(P.optWhitespace.then(P.regexp(/месяц(а|ев)?\s+назад/i)))
             .desc("сколько месяцев назад, например '3 месяца назад'").map((n) => shiftCurrentMonth(-Number.parseInt(n)))
     ),
-    statisticRequest: l => P.regexp(/\s*статистика(\s+за)?/).then(P.optWhitespace).then(l.date.fallback(new Date())).map(date => new StatisticRequest(date))
+    statisticRequest: l => P.regexp(/\s*статистика(\s+за)?/i).then(P.optWhitespace).then(l.date.fallback(new Date())).map(date => new StatisticRequest(date))
 })
 
 export function shiftCurrentMonth(monthsToShift: number) {
