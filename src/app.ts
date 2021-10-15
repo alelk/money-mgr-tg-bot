@@ -8,7 +8,7 @@ assert(tgToken != null, "No TG_BOT_TOKEN environment variable found")
 
 const bot = new Telegraf(tgToken!)
 
-const doc = new GoogleSpreadsheet("1qPm39FBUKRPVrk2jl3e8smeSb-yggdTo9IlCx7ff1Hc")
+const doc = new GoogleSpreadsheet("1QvZ8_1LKSk6oagzHU2OJaTtdLQfds8_2xY7wtFd6rGc")
 
 const moneyMgrEmail = process.env["MONEY_MGR_EMAIL"]
 const moneyMgrKey = process.env["MONEY_MGR_KEY"]
