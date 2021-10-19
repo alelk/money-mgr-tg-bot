@@ -1,5 +1,5 @@
 import P from 'parsimmon'
-import { Category, TransactionType } from '../model'
+import { Category, CategorySynonym, TransactionType } from '../model'
 import { ParsedTransaction } from '../model/parsed'
 
 const currencies = ["руб.", "руб", "рублей", "р.", "р"]
@@ -28,18 +28,31 @@ function stringIgnoreCase(str: string) {
     });
 }
 
+function categorySynonym(s: CategorySynonym<string | RegExp>) {
+    if (typeof s.value === "string") return stringIgnoreCase(s.value)
+    else return P.regexp(s.value)
+}
+
 export function transactionParser(categories: Category[]) {
     return P.createLanguage<TransactionSpec>({
         category: () =>
             P.alt(
                 ...categories
-                    .map(c => [c.name, ...c.synonyms])
+                    .map(c => [
+                        { 
+                            parserLen: c.name.length, 
+                            parser: stringIgnoreCase(c.name) 
+                        },
+                        ...c.synonyms.map(s => ({ 
+                            parserLen: typeof s.value === 'string' ? s.value.length : 0, 
+                            parser: categorySynonym(s) 
+                        }))
+                    ])
                     .reduce((a, b) => a.concat(b), [])
-                    .sort((a, b) => b.length - a.length)
-                    .map(stringIgnoreCase))
-                .map(c =>
-                    categories.find(v =>
-                        [v.name.toLowerCase(), ...v.synonyms.map(s => s.toLowerCase())].includes(c.toLowerCase()))!),
+                    .sort((a, b) => b.parserLen - a.parserLen)
+                    .map(p => p.parser)
+            )
+                .map(c => categories.find(category => category.matches(c))!),
         number: () => P.regexp(/-?(0|[1-9][0-9]*)([.,][0-9]+)?([eE][+-]?[0-9]+)?/).map(n => Number(n.replace(/,/, '.'))).desc("число"),
         currency: () =>
             P.alt(
@@ -52,7 +65,7 @@ export function transactionParser(categories: Category[]) {
             P.regexp(/[+-]/).trim(P.optWhitespace),
             l.amountOfMoneyExpr,
             (a, op, b) => op === "+" ? a + b : a - b).or(l.amountOfMoney),
-        comment: () => P.any.atLeast(1).tie(),
+        comment: () => P.any.atLeast(1).tie().desc("комментарий"),
         date: () =>
             P.alt(
                 stringIgnoreCase("вчера").map(() => {

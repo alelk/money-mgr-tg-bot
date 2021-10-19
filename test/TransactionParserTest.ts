@@ -1,12 +1,15 @@
 import { transactionParser } from '../src/parser'
 import { deepStrictEqual, strictEqual } from 'assert'
 import { ParsedTransaction } from '../src/model/parsed'
-import { Category } from '../src/model'
+import { Category, parseCategorySynonym } from '../src/model'
+
+const cat = (transactionType: string, name: string, synonyms: string[]) => new Category(transactionType, name, synonyms.map(parseCategorySynonym))
 
 const testCategories = [
-    new Category("расходы", "продукты", ["еда"]),
-    new Category("расходы", "автомобиль", []),
-    new Category("доходы", "зарплата", [])]
+    cat("расходы", "продукты", ["еда"]),
+    cat("расходы", "автомобиль", ["/(бенз(ин)?|запчасти)/"]),
+    cat("доходы", "зарплата", []),
+    cat("доходы", "кэшбек", ["бонусы", "бонусы tinkoff банк", "бонусы tinkoff"])]
 
 const categoryByName = (name: string) => testCategories.find(c => c.name === name)!
 
@@ -17,6 +20,12 @@ describe("transaction parser", () => {
     })
     it("can parse categories by synonyms", () => {
         deepStrictEqual(transactionParser(testCategories).category.parse("еда"), { status: true, value: categoryByName('продукты') })
+        deepStrictEqual(transactionParser(testCategories).category.parse("бензин"), { status: true, value: categoryByName('автомобиль') })
+        deepStrictEqual(transactionParser(testCategories).category.parse("бенз"), { status: true, value: categoryByName('автомобиль') })
+    })
+    it("can parse categories by RegExp synonyms", () => {
+        deepStrictEqual(transactionParser(testCategories).category.parse("бензин"), { status: true, value: categoryByName('автомобиль') })
+        deepStrictEqual(transactionParser(testCategories).category.parse("бенз"), { status: true, value: categoryByName('автомобиль') })
     })
     it("can parse amount of money", () => {
         deepStrictEqual(transactionParser([]).amountOfMoney.parse("1234"), { status: true, value: 1234 })
@@ -40,6 +49,20 @@ describe("transaction parser", () => {
         deepStrictEqual(
             transactionParser(testCategories).transaction.parse("123.234 руБ. зарплата"),
             { status: true, value: new ParsedTransaction(categoryByName("зарплата"), 123.234) }
+        )
+    })
+    it("can parse categories in transaction by longest string expression", () => {
+        deepStrictEqual(
+            transactionParser(testCategories).transaction.parse("бонусы 100 р"),
+            { status: true, value: new ParsedTransaction(categoryByName('кэшбек'), 100) }
+        )
+        deepStrictEqual(
+            transactionParser(testCategories).transaction.parse("бонусы tinkoff 500"),
+            { status: true, value: new ParsedTransaction(categoryByName('кэшбек'), 500) }
+        )
+        deepStrictEqual(
+            transactionParser(testCategories).transaction.parse("бонусы tinkoff банк 500"),
+            { status: true, value: new ParsedTransaction(categoryByName('кэшбек'), 500) }
         )
     })
     it("can parse transaction with comment", () => {
