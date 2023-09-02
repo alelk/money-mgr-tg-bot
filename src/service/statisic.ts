@@ -30,7 +30,7 @@ export class StatisticService extends AbstractGoogleSpreadsheetService {
         d.resetLocalCache()
         await d.loadInfo()
         const sheet = d.sheetsByTitle["month report by category"]
-        const rows = (await sheet.getRows()).filter(r => /20\d\d-\w\w\w/.test(r["date - Year-Month"]))
+        const rows = (await sheet.getRows()).filter(r => /20\d\d-\w\w\w/.test(r.get("date - Year-Month")))
         const categories = await this.categoriesPromise
         const transactionTypes = await this.transactionTypesPromise
         const statisticCategories =
@@ -40,9 +40,9 @@ export class StatisticService extends AbstractGoogleSpreadsheetService {
                 return c
             }) as Category[]
         const monthStatistic = rows.map(r => ({
-            date: new Date(Date.parse(r["date - Year-Month"])),
+            date: new Date(Date.parse(r.get("date - Year-Month"))),
             categories: statisticCategories.reduce((acc, c) =>
-                [...acc, { category: c, amount: Number.parseFloat(r[c.name] == null || r[c.name].trim() === '' ? 0 : r[c.name]) }]
+                [...acc, { category: c, amount: Number.parseFloat(r.get(c.name) == null || r.get(c.name).trim() === '' ? 0 : r.get(c.name)) }]
                 , [] as RawCategoryStatistic[])
         }))
         const rootCategories = categories.filter(c => c.parentCategoryName == null)
