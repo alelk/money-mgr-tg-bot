@@ -1,5 +1,5 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet'
-import { Transaction } from '../model'
+import { JWT } from 'google-auth-library'
 
 export abstract class AbstractGoogleSpreadsheetService {
 
@@ -10,11 +10,15 @@ export abstract class AbstractGoogleSpreadsheetService {
     }
 
     private async connect(sheetId: string, authEmail: string, authKey: string): Promise<GoogleSpreadsheet> {
-        const s = new GoogleSpreadsheet(sheetId)
-        await s.useServiceAccountAuth({
-            client_email: authEmail,
-            private_key: authKey
+        const jwt = new JWT({
+            email: authEmail,
+            key: authKey,
+            scopes: [
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive.file',
+            ]
         })
+        const s = new GoogleSpreadsheet(sheetId, jwt)
         await s.loadInfo()
         return s
     }

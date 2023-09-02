@@ -1,30 +1,30 @@
 {
-  "name": "profit-tg-bot",
-  "version": "1.0.0",
-  "description": "",
+  "name": "money-management-tg-bot",
+  "version": "1.1.0",
+  "description": "Money Management Telegram Bot",
   "main": "index.js",
   "scripts": {
     "start": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/app.ts",
     "test": "mocha"
   },
   "keywords": [],
-  "author": "",
+  "author": "Alex Elkin",
   "license": "ISC",
   "devDependencies": {
-    "@types/mocha": "^8.2.0",
-    "@types/node": "^14.14.21",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.5.8",
     "assert": "^2.0.0",
-    "mocha": "^8.2.1",
-    "nodemon": "^2.0.7",
-    "ts-node": "^9.1.1"
+    "mocha": "^10.2.0",
+    "nodemon": "^3.0.1",
+    "ts-node": "^10.9.1"
   },
   "dependencies": {
-    "@types/google-spreadsheet": "^3.0.2",
-    "@types/lodash": "^4.14.168",
+    "@types/lodash": "^4.14.197",
     "@types/parsimmon": "^1.10.6",
-    "google-spreadsheet": "^3.1.15",
-    "lodash": "^4.17.20",
-    "parsimmon": "^1.16.0",
-    "telegraf": "^4.0.1"
+    "google-auth-library": "^8.9.0",
+    "google-spreadsheet": "^4.0.2",
+    "lodash": "^4.17.21",
+    "parsimmon": "^1.18.1",
+    "telegraf": "^4.12.2"
   }
 }

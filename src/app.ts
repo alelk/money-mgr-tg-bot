@@ -3,10 +3,10 @@ import { Telegraf } from 'telegraf'
 import { transactionParser } from './parser/transactions'
 import { transactionTypesSvc, categoriesSvc, transactionsSvc, statisticSvc } from './services'
 import { Category, Transaction, TransactionType } from './model'
-import { Message, Update } from 'telegraf/typings/telegram-types'
 import _ from 'lodash'
 import { CategoryStatistic } from './model/statistic'
 import { statisticRequestParser } from './parser/statisticRequest'
+import { Message, Update } from 'telegraf/typings/core/types/typegram'
 
 
 const tgToken = process.env["TG_BOT_TOKEN"]
