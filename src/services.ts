@@ -10,10 +10,10 @@ assert(moneyMgrEmail != null, "No MONEY_MGR_EMAIL environment variable found")
 assert(moneyMgrKey != null, "No MONEY_MGR_KEY environment variable found")
 
 export const categoriesSvc =
-    new CategoriesService("1bBxMmE6QsDwIvi6w1erMpnU9-UjcUR75jgWXsYssUzE", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new CategoriesService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionTypesSvc =
-    new TransactionTypesService("1bBxMmE6QsDwIvi6w1erMpnU9-UjcUR75jgWXsYssUzE", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new TransactionTypesService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionsSvc =
-    new TransactionsService("1bBxMmE6QsDwIvi6w1erMpnU9-UjcUR75jgWXsYssUzE", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new TransactionsService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const statisticSvc =
-    new StatisticService("1bBxMmE6QsDwIvi6w1erMpnU9-UjcUR75jgWXsYssUzE", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new StatisticService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
