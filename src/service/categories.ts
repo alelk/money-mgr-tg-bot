@@ -13,11 +13,11 @@ export class CategoriesService extends AbstractGoogleSpreadsheetService {
         const rows = await sheet.getRows()
         return rows.map(r => {
             return new Category(
-                r["transactionType"],
-                r["name"],
-                (<string>r["synonyms"])?.split("\n").map(parseCategorySynonym) || [],
-                r["relation to parent"],
-                r["parent"] == null || /^\w*$/.test(r["parent"]) ? undefined : r["parent"])
+                r.get("transactionType"),
+                r.get("name"),
+                (<string>r.get("synonyms"))?.split("\n").map(parseCategorySynonym) || [],
+                r.get("relation to parent"),
+                r.get("parent") == null || /^\w*$/.test(r.get("parent")) ? undefined : r.get("parent"))
         })
     }
 
