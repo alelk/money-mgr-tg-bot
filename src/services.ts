@@ -14,6 +14,6 @@ export const categoriesSvc =
 export const transactionTypesSvc =
     new TransactionTypesService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
 export const transactionsSvc =
-    new TransactionsService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
+    new TransactionsService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'), categoriesSvc, transactionTypesSvc)
 export const statisticSvc =
     new StatisticService("1KWzJgnN11L7aQl25G28LCKehJhqDmxSvR3jJSQTLVsg", moneyMgrEmail!, moneyMgrKey!.replace(/\\n/g, '\n'))
