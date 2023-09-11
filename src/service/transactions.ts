@@ -75,11 +75,14 @@ export class TransactionsService extends AbstractGoogleSpreadsheetService {
     }
 
     private async calculateCategoryFactor(category: Category): Promise<1 | -1> {
+        const currentFactor = category.relationToParent == CategoryRelationToParent.NEGATIVE ? -1 : 1
         if (category.parentCategoryName != null) {
             const parentFactor = await this.calculateCategoryFactor(await this.getCategory(category.parentCategoryName))
-            const currentFactor = category.relationToParent == CategoryRelationToParent.NEGATIVE ? -1 : 1
             return currentFactor * parentFactor as 1 | -1
         }
-        else return await this.transactionTypeFactor(category.transactionTypeName)
+        else {
+            const transactionTypeFactor = await this.transactionTypeFactor(category.transactionTypeName)
+            return currentFactor * transactionTypeFactor as 1 | -1
+        }
     }
 }

@@ -19,10 +19,10 @@ export class StatisticService extends AbstractGoogleSpreadsheetService {
         const childStatistic =
             (await Promise.all(childCategories.map(c => this.categoryStatistic(c, rawCategoryStatistic))))
                 .filter(v => v != null) as CategoryStatistic[]
-        const childAmount = childStatistic.reduce((acc, c) => c.category.relationToParent == CategoryRelationToParent.POSITIVE ? acc + c.amount : acc - c.amount, 0)
+        const childAmount = childStatistic.reduce((acc, c) => acc + c.amount, 0)
         const amount = rawCategoryStatistic.find(s => s.category.name == category.name)?.amount
         if ((amount == null || amount == 0) && childStatistic.length === 0) return undefined
-        else return new CategoryStatistic(category, (amount == null ? 0 : category.relationToParent === CategoryRelationToParent.POSITIVE ? amount : -amount) + childAmount, childStatistic)
+        else return new CategoryStatistic(category, amount == null ? 0 : amount + childAmount, childStatistic)
     }
 
     async getStatistic(): Promise<MonthStatustic[]> {
@@ -61,17 +61,12 @@ export class StatisticService extends AbstractGoogleSpreadsheetService {
                     }))
                 ).filter(v => v != null) as TransactionTypeStatistic[]
                 const total = transactionTypeStatistic.reduce(({ formula, amount }, s) =>
-                    s.transactionType.direction === TransactionDirection.INCOME //&& amount !== 0
+                    s.transactionType.direction === TransactionDirection.INCOME || s.transactionType.direction === TransactionDirection.OUTCOME //&& amount !== 0
                         ? {
                             formula: (formula === '' ? `${s.amount} [${s.transactionType.name}]` : `${formula} + ${s.amount} [${s.transactionType.name}]`),
                             amount: amount + s.amount
                         }
-                        : s.transactionType.direction === TransactionDirection.OUTCOME //&& amount !== 0
-                            ? {
-                                formula: (formula === '' ? `${s.amount} [${s.transactionType.name}]` : `${formula} - ${s.amount} [${s.transactionType.name}]`),
-                                amount: amount - s.amount
-                            }
-                            : { formula, amount },
+                        : { formula, amount },
                     { formula: '', amount: 0 })
                 return new MonthStatustic(s.date, transactionTypeStatistic, `${total.formula} = ${total.amount} руб.`)
             })
