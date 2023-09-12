@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/app.ts",
-    "test": "mocha"
+    "test": "mocha",
+    "build": "rimraf build && tsc -p tsconfig.json",
+    "prod": "NODE_ENV=production node build/src/app.js"
   },
   "keywords": [],
   "author": "Alex Elkin",
@@ -16,7 +18,8 @@
     "assert": "^2.0.0",
     "mocha": "^10.2.0",
     "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "rimraf": "^5.0.1"
   },
   "dependencies": {
     "@types/lodash": "^4.14.197",
