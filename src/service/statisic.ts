@@ -22,7 +22,7 @@ export class StatisticService extends AbstractGoogleSpreadsheetService {
         const childAmount = childStatistic.reduce((acc, c) => acc + c.amount, 0)
         const amount = rawCategoryStatistic.find(s => s.category.name == category.name)?.amount
         if ((amount == null || amount == 0) && childStatistic.length === 0) return undefined
-        else return new CategoryStatistic(category, amount == null ? 0 : amount + childAmount, childStatistic)
+        else return new CategoryStatistic(category, (amount == null ? 0 : amount) + childAmount, childStatistic)
     }
 
     async getStatistic(): Promise<MonthStatustic[]> {
