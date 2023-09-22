@@ -28,6 +28,6 @@
     "google-spreadsheet": "^4.0.2",
     "lodash": "^4.17.21",
     "parsimmon": "^1.18.1",
-    "telegraf": "^4.12.2"
+    "telegraf": "^4.14.0"
   }
 }
