@@ -1,4 +1,4 @@
-import { assert } from 'console'
+
 import { Telegraf } from 'telegraf'
 import { transactionParser } from './parser/transactions'
 import { transactionTypesSvc, categoriesSvc, transactionsSvc, statisticSvc } from './services'
@@ -8,11 +8,8 @@ import { CategoryStatistic } from './model/statistic'
 import { statisticRequestParser } from './parser/statisticRequest'
 import { Message, Update } from 'telegraf/typings/core/types/typegram'
 
-
 const tgToken = process.env["TG_BOT_TOKEN"]
-
-assert(tgToken != null, "No TG_BOT_TOKEN environment variable found")
-
+if (tgToken == null) throw new Error("No TG_BOT_TOKEN environment variable found")
 const bot = new Telegraf(tgToken!)
 
 const transactionTypes = transactionTypesSvc.getTransactionTypes()
@@ -171,7 +168,19 @@ bot.on('edited_message', async (ctx) => {
     }
 })
 
-bot.launch()
+const domain = process.env.DOMAIN
+const port = process.env.PORT
+
+console.log(`Webhook domain: ${domain}, port: ${port}`)
+
+if (domain != null && port != null) {
+    bot
+    .launch({ webhook: { domain, port: parseInt(port) } })
+    .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
+} else {
+    console.log("start bot in development mode")
+    bot.launch()
+}
 
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'))
