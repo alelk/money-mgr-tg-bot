@@ -9,6 +9,8 @@ import { statisticRequestParser } from './parser/statisticRequest'
 import { Message, Update } from 'telegraf/typings/core/types/typegram'
 import fs from 'fs'
 import { TlsOptions } from 'tls'
+import marked from 'marked'
+marked.setOptions({ async: false })
 
 const tgToken = process.env["TG_BOT_TOKEN"]
 if (tgToken == null) throw new Error("No TG_BOT_TOKEN environment variable found")
@@ -71,7 +73,7 @@ _структура сообщения:_ \`когда что сколько ко
 `
 
 bot.command('help', async (ctx) => {
-    const m = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
+    const m = await ctx.replyWithHTML(marked.parseInline(`${helpMsg}\nСообщение будет удалено через минуту`) as string)
     delay(60000, () => ctx.deleteMessage(m.message_id))
 })
 
@@ -95,12 +97,12 @@ bot.hears(/статистика(.*)/i, async (ctx) => {
                     return `*#${transactionType.name.trim().replace(/[^\w\dа-я]+/ig, '_')}*   \`${amount} руб.\`\n\n` +
                         categories.map(categoryStatistic => printCategoryStatistic(categoryStatistic).join('\n')).join('\n\n')
                 }).join('\n\n') + `\n\n--\nИтог месяца: \`${s.result}\``
-            await ctx.replyWithMarkdownV2(msgText)
+            await ctx.replyWithHTML(marked.parseInline(msgText) as string)
         }
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithHTML(marked.parseInline(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`) as string, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithHTML(marked.parseInline(`${helpMsg}\nСообщение будет удалено через минуту`) as string)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -117,13 +119,13 @@ bot.command('categories', async (ctx) => {
                 .join("\n  ")
             }\n\`\`\``)
             .join("\n\n")
-        const m = await ctx.replyWithMarkdownV2(msgText)
+        const m = await ctx.replyWithHTML(marked.parseInline(msgText) as string)
         delay(120000, () => ctx.deleteMessage(ctx.message.message_id))
         delay(120000, () => ctx.deleteMessage(m.message_id))
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithHTML(marked.parseInline(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`) as string, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithHTML(marked.parseInline(`${helpMsg}\nСообщение будет удалено через минуту`) as string)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -133,14 +135,15 @@ bot.on('text', async (ctx) => {
     try {
         const t = await parseTransaction(ctx.message)
         await transactionsSvc.addTransaction(t)
-        await ctx.replyWithMarkdownV2(
+        await ctx.replyWithHTML(marked.parseInline(
             `запись добавлена: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} \`${t.date.toLocaleDateString('ru')}\` ` +
             `категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
-            `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: ctx.message.message_id })
+            `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`) as string,
+            { reply_to_message_id: ctx.message.message_id })
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithHTML(marked.parseInline(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`) as string, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithHTML(marked.parseInline(`${helpMsg}\nСообщение будет удалено через минуту`) as string)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -157,13 +160,15 @@ bot.on('edited_message', async (ctx) => {
                 invalidMessageIds.delete(msg.message_id)
             }
             else await transactionsSvc.editTransaction(t)
-            await ctx.replyWithMarkdownV2(
+            await ctx.replyWithHTML(marked.parseInline(
                 `запись ${isNewTransaction ? 'добавлена' : 'изменена'}: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
                 `\`${t.date.toLocaleDateString('ru')}\` категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
-                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: msg.message_id })
+                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`) as string,
+                { reply_to_message_id: msg.message_id }
+            )
         } catch (e) {
-            const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: msg.message_id })
-            const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
+            const m1 = await ctx.replyWithHTML(marked.parseInline(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`) as string, { reply_to_message_id: msg.message_id })
+            const m2 = await ctx.replyWithHTML(marked.parseInline(`${helpMsg}\nСообщение будет удалено через минуту`) as string)
             delay(60000, () => ctx.deleteMessage(m1.message_id))
             delay(60000, () => ctx.deleteMessage(m2.message_id))
         }
