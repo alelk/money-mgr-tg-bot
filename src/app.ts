@@ -184,12 +184,21 @@ if (domain != null && port != null) {
         tlsOptions = {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath),
-            passphrase: process.env.TG_BOT_PASSPHRASE
+            passphrase: process.env.TG_BOT_PASSPHRASE,
         }
     }
+    const selfSignedCertPath = process.env.TG_BOT_SELF_SIGNED_CERT_PATH
     bot
-    .launch({ webhook: { domain, port: parseInt(port), tlsOptions} })
-    .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
+        .launch({
+            webhook: {
+                domain,
+                port: parseInt(port),
+                tlsOptions,
+                certificate: selfSignedCertPath != null ? { source: fs.readFileSync(selfSignedCertPath), filename: selfSignedCertPath } : undefined
+            }
+        }
+        )
+        .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
 } else {
     console.log("start bot in development mode")
     bot.launch()
