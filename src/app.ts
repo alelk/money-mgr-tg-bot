@@ -7,6 +7,8 @@ import _ from 'lodash'
 import { CategoryStatistic } from './model/statistic'
 import { statisticRequestParser } from './parser/statisticRequest'
 import { Message, Update } from 'telegraf/typings/core/types/typegram'
+import fs from 'fs'
+import { TlsOptions } from 'tls'
 
 const tgToken = process.env["TG_BOT_TOKEN"]
 if (tgToken == null) throw new Error("No TG_BOT_TOKEN environment variable found")
@@ -69,7 +71,7 @@ _структура сообщения:_ \`когда что сколько ко
 `
 
 bot.command('help', async (ctx) => {
-    const m = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+    const m = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
     delay(60000, () => ctx.deleteMessage(m.message_id))
 })
 
@@ -93,12 +95,12 @@ bot.hears(/статистика(.*)/i, async (ctx) => {
                     return `*#${transactionType.name.trim().replace(/[^\w\dа-я]+/ig, '_')}*   \`${amount} руб.\`\n\n` +
                         categories.map(categoryStatistic => printCategoryStatistic(categoryStatistic).join('\n')).join('\n\n')
                 }).join('\n\n') + `\n\n--\nИтог месяца: \`${s.result}\``
-            await ctx.replyWithMarkdown(msgText)
+            await ctx.replyWithMarkdownV2(msgText)
         }
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -115,13 +117,13 @@ bot.command('categories', async (ctx) => {
                 .join("\n  ")
             }\n\`\`\``)
             .join("\n\n")
-        const m = await ctx.replyWithMarkdown(msgText)
+        const m = await ctx.replyWithMarkdownV2(msgText)
         delay(120000, () => ctx.deleteMessage(ctx.message.message_id))
         delay(120000, () => ctx.deleteMessage(m.message_id))
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -131,14 +133,14 @@ bot.on('text', async (ctx) => {
     try {
         const t = await parseTransaction(ctx.message)
         await transactionsSvc.addTransaction(t)
-        await ctx.replyWithMarkdown(
+        await ctx.replyWithMarkdownV2(
             `запись добавлена: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} \`${t.date.toLocaleDateString('ru')}\` ` +
             `категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
             `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: ctx.message.message_id })
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
-        const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+        const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
     }
@@ -155,27 +157,38 @@ bot.on('edited_message', async (ctx) => {
                 invalidMessageIds.delete(msg.message_id)
             }
             else await transactionsSvc.editTransaction(t)
-            await ctx.replyWithMarkdown(
+            await ctx.replyWithMarkdownV2(
                 `запись ${isNewTransaction ? 'добавлена' : 'изменена'}: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
                 `\`${t.date.toLocaleDateString('ru')}\` категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
                 `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: msg.message_id })
         } catch (e) {
-            const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: msg.message_id })
-            const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
+            const m1 = await ctx.replyWithMarkdownV2(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: msg.message_id })
+            const m2 = await ctx.replyWithMarkdownV2(`${helpMsg}\nСообщение будет удалено через минуту`)
             delay(60000, () => ctx.deleteMessage(m1.message_id))
             delay(60000, () => ctx.deleteMessage(m2.message_id))
         }
     }
 })
 
-const domain = process.env.DOMAIN
-const port = process.env.PORT
+const domain = process.env.TG_BOT_DOMAIN
+const port = process.env.TG_BOT_PORT
 
 console.log(`Webhook domain: ${domain}, port: ${port}`)
 
 if (domain != null && port != null) {
+    const keyPath = process.env.TG_BOT_KEY_PATH
+    const certPath = process.env.TG_BOT_CERT_PATH
+    let tlsOptions: TlsOptions | undefined = undefined
+    if (keyPath != null && certPath != null) {
+        console.log(`Tls options specified: key path = ${keyPath}, cert path = ${certPath}`)
+        tlsOptions = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath),
+            passphrase: process.env.TG_BOT_PASSPHRASE
+        }
+    }
     bot
-    .launch({ webhook: { domain, port: parseInt(port) } })
+    .launch({ webhook: { domain, port: parseInt(port), tlsOptions} })
     .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
 } else {
     console.log("start bot in development mode")
