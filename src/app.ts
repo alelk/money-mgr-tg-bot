@@ -1,16 +1,25 @@
-
-import { Telegraf } from 'telegraf'
-import { transactionParser } from './parser/transactions'
-import { transactionTypesSvc, categoriesSvc, transactionsSvc, statisticSvc } from './services'
-import { Category, Transaction, TransactionType } from './model'
+import {Telegraf} from 'telegraf'
+import {transactionParser} from './parser/transactions'
+import {transactionTypesSvc, categoriesSvc, transactionsSvc, statisticSvc} from './services'
+import {Category, Transaction, TransactionType} from './model'
 import _ from 'lodash'
-import { CategoryStatistic } from './model/statistic'
-import { statisticRequestParser } from './parser/statisticRequest'
-import { Message, Update } from 'telegraf/typings/core/types/typegram'
+import {CategoryStatistic} from './model/statistic'
+import {statisticRequestParser} from './parser/statisticRequest'
+import {Message, Update} from 'telegraf/typings/core/types/typegram'
+import https from "https";
+import dns from "dns";
 
 const tgToken = process.env["TG_BOT_TOKEN"]
 if (tgToken == null) throw new Error("No TG_BOT_TOKEN environment variable found")
-const bot = new Telegraf(tgToken!)
+
+const agent = new https.Agent({
+    keepAlive: true,
+    lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, {...options, family: 4}, callback);
+    },
+});
+
+const bot = new Telegraf(tgToken!, {telegram: {agent}})
 
 const transactionTypes = transactionTypesSvc.getTransactionTypes()
 const categories = categoriesSvc.getCategories()
@@ -28,7 +37,7 @@ async function parseTransaction(m: Message.TextMessage & Update.NonChannel): Pro
     const p = await parser
     const result = p.transaction.parse(m.text)
     if (result.status == true) {
-        const { category, date, amountOfMoney, comment } = result.value
+        const {category, date, amountOfMoney, comment} = result.value
         const transactionType = await transactionTypeByCategory(category)
         const categoryComment = category.userText != null ? `[${category.userText}]` : null
         return new Transaction(
@@ -80,7 +89,7 @@ bot.hears(/статистика(.*)/i, async (ctx) => {
         if (s == null) await ctx.reply("Статистика не найдена")
         else {
             const msgText = `Статистика за ${s.date.getFullYear()}-${s.date.getMonth() + 1}:\n\n` +
-                s.transactionTypeStatistic.map(({ transactionType, categories, amount }) => {
+                s.transactionTypeStatistic.map(({transactionType, categories, amount}) => {
                     function printCategoryStatistic(categoryStatistic: CategoryStatistic, level = 0): string[] {
                         const children = (categoryStatistic.children || []).reduce((acc, с) => [...acc, ...printCategoryStatistic(с, level + 1)], [] as string[])
                         return [
@@ -90,6 +99,7 @@ bot.hears(/статистика(.*)/i, async (ctx) => {
                             ...children
                         ]
                     }
+
                     return `*#${transactionType.name.trim().replace(/[^\w\dа-я]+/ig, '_')}*   \`${amount} руб.\`\n\n` +
                         categories.map(categoryStatistic => printCategoryStatistic(categoryStatistic).join('\n')).join('\n\n')
                 }).join('\n\n') + `\n\n--\nИтог месяца: \`${s.result}\``
@@ -97,7 +107,7 @@ bot.hears(/статистика(.*)/i, async (ctx) => {
         }
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, {reply_to_message_id: ctx.message.message_id})
         const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
@@ -120,7 +130,7 @@ bot.command('categories', async (ctx) => {
         delay(120000, () => ctx.deleteMessage(m.message_id))
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, {reply_to_message_id: ctx.message.message_id})
         const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
@@ -134,10 +144,10 @@ bot.on('text', async (ctx) => {
         await ctx.replyWithMarkdown(
             `запись добавлена: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} \`${t.date.toLocaleDateString('ru')}\` ` +
             `категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
-            `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: ctx.message.message_id })
+            `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, {reply_to_message_id: ctx.message.message_id})
     } catch (e) {
         invalidMessageIds.add(ctx.message.message_id)
-        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: ctx.message.message_id })
+        const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, {reply_to_message_id: ctx.message.message_id})
         const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
         delay(60000, () => ctx.deleteMessage(m1.message_id))
         delay(60000, () => ctx.deleteMessage(m2.message_id))
@@ -153,14 +163,13 @@ bot.on('edited_message', async (ctx) => {
             if (isNewTransaction) {
                 await transactionsSvc.addTransaction(t)
                 invalidMessageIds.delete(msg.message_id)
-            }
-            else await transactionsSvc.editTransaction(t)
+            } else await transactionsSvc.editTransaction(t)
             await ctx.replyWithMarkdown(
                 `запись ${isNewTransaction ? 'добавлена' : 'изменена'}: #${t.type.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
                 `\`${t.date.toLocaleDateString('ru')}\` категория #${t.category.name.replace(/[^\w\dа-я]+/ig, '\\_')} ` +
-                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, { reply_to_message_id: msg.message_id })
+                `сумма \`${t.amountOfMoney} руб.\` ${t.comment != null ? ` комментарий \`${t.comment}\`` : ''}`, {reply_to_message_id: msg.message_id})
         } catch (e) {
-            const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, { reply_to_message_id: msg.message_id })
+            const m1 = await ctx.replyWithMarkdown(`${(e as Error).message || e}\n\nсообщение об ошибке будет удалено через 1 минуту`, {reply_to_message_id: msg.message_id})
             const m2 = await ctx.replyWithMarkdown(`${helpMsg}\nСообщение будет удалено через минуту`)
             delay(60000, () => ctx.deleteMessage(m1.message_id))
             delay(60000, () => ctx.deleteMessage(m2.message_id))
@@ -175,8 +184,8 @@ console.log(`Webhook domain: ${domain}, port: ${port}`)
 
 if (domain != null && port != null) {
     bot
-    .launch({ webhook: { domain, port: parseInt(port) } })
-    .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
+        .launch({webhook: {domain, port: parseInt(port)}})
+        .then(() => console.log(`bot started in production mode: webhook: ${domain}:${port}`))
 } else {
     console.log("start bot in development mode")
     bot.launch()
